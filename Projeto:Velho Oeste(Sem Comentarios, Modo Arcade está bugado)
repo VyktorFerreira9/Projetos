@@ -1,0 +1,278 @@
+//Projeto:Velho Oeste
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+typedef struct {
+    char nome[50];
+    int vida;
+    int ataque;
+    int chanceCritico;
+    int chanceEsquiva;
+    int curasRestantes;
+} Personagem;
+
+void falar(char falas[][256], int tamanho) {
+    srand(time(NULL));
+    int escolha = rand() % tamanho;
+    printf("%s\n", falas[escolha]);
+}
+
+void falarEscolha(char falas[][256], int escolha) {
+    printf("%s\n", falas[escolha - 1]);
+}
+
+void iniciarJogo();
+void escolherPersonagem(Personagem *personagem);
+void realizarAcao(Personagem *atacante, int escolha, Personagem *alvo);
+void ataque(Personagem *atacante, Personagem *alvo);
+void curar(Personagem *personagem);
+void render(Personagem *personagem);
+void arriscarCritico(Personagem *atacante, Personagem *alvo);
+void modoArcade(Personagem *jogador1, Personagem *jogador2);
+void executarScript(Personagem *personagem, Personagem *alvo, int *indiceScript, int script[], int tamanhoScript);
+
+int main() {
+    iniciarJogo();
+    return 0;
+}
+
+void iniciarJogo() {
+    printf("Bem-vindo ao Jogo de Luta!\n");
+
+    Personagem jogador1, jogador2;
+    int modo;
+
+    printf("Escolha o modo de jogo (1 para PvP, 2 para Arcade): ");
+    scanf("%d", &modo);
+    getchar();  // Limpar o buffer do teclado
+
+    printf("\nPlayer 1, digite seu nome: ");
+    fgets(jogador1.nome, sizeof(jogador1.nome), stdin);
+    jogador1.nome[strcspn(jogador1.nome, "\n")] = '\0';  // Remover o newline
+    escolherPersonagem(&jogador1);
+
+    printf("\nPlayer 2, digite seu nome: ");
+    fgets(jogador2.nome, sizeof(jogador2.nome), stdin);
+    jogador2.nome[strcspn(jogador2.nome, "\n")] = '\0';  // Remover o newline
+    escolherPersonagem(&jogador2);
+
+    if (modo == 2) {
+        modoArcade(&jogador1, &jogador2);
+    } else {
+        while (jogador1.vida > 0 && jogador2.vida > 0) {
+            printf("%s: %d HP | %s: %d HP\n", jogador1.nome, jogador1.vida, jogador2.nome, jogador2.vida);
+
+            int escolhaJogador1, escolhaJogador2;
+
+            printf("%s, escolha a ação (1 para atacar, 2 para curar, 3 para render-se, 4 para arriscar crítico): ", jogador1.nome);
+            scanf("%d", &escolhaJogador1);
+
+            printf("%s, escolha a ação (1 para atacar, 2 para curar, 3 para render-se, 4 para arriscar crítico): ", jogador2.nome);
+            scanf("%d", &escolhaJogador2);
+
+            realizarAcao(&jogador1, escolhaJogador1, &jogador2);
+            realizarAcao(&jogador2, escolhaJogador2, &jogador1);
+        }
+    }
+
+    printf("Fim do Jogo!\n%s: %d HP | %s: %d HP\n", jogador1.nome, jogador1.vida, jogador2.nome, jogador2.vida);
+
+    if (jogador1.vida > 0) {
+        printf("%s venceu!\n", jogador1.nome);
+    } else {
+        printf("%s venceu!\n", jogador2.nome);
+    }
+}
+
+void escolherPersonagem(Personagem *personagem) {
+    char falasWyktorEscolhido[][256] = {
+        "Eles me chamam de homem das sombras sorridente, muito prazer!",
+        "Finalmente, Estava louco por um duelo.",
+        "O fogo do inferno e um dedo rápido no gatilho levam um homem a qualquer lugar."
+    };
+
+    char falasBeatrizEscolhida[][256] = {
+        "Hora da investigação",
+        "Vamos atrás de uma nova recompensa",
+        "Observe e aprenda, Alice"
+    };
+
+    char falasJakeEscolhido[][256] = {
+        "Hora de uma nova caçada",
+        "Estava doido por um duelo",
+        "Espero que tenha uma boa recompensa"
+    };
+
+    char falasLuizEscolhido[][256] = {
+        "Hora do Show",
+        "Será que tem alguém mais forte que eu?",
+        "Eu já tava com vontade de socar alguém, então vamos nessa"
+    };
+
+    printf("\n%s, escolha seu personagem:\n1. Wyktor\n2. Beatriz\n3. Jake\n4. Luiz\n", personagem->nome);
+    int escolhaPersonagem;
+    scanf("%d", &escolhaPersonagem);
+    getchar();  // Limpar o buffer do teclado
+
+    switch (escolhaPersonagem) {
+        case 1:
+            strcpy(personagem->nome, "Wyktor");
+            personagem->vida = 25;
+            personagem->ataque = 5;
+            personagem->chanceCritico = 10;
+            personagem->chanceEsquiva = 4;
+            falar(falasWyktorEscolhido, 3);
+            break;
+        case 2:
+            strcpy(personagem->nome, "Beatriz");
+            personagem->vida = 15;
+            personagem->ataque = 5;
+            personagem->chanceCritico = 40;
+            personagem->chanceEsquiva = 5;
+            falar(falasBeatrizEscolhida, 3);
+            break;
+        case 3:
+            strcpy(personagem->nome, "Jake");
+            personagem->vida = 15;
+            personagem->ataque = 3;
+            personagem->chanceCritico = 70;
+            personagem->chanceEsquiva = 3;
+            falar(falasJakeEscolhido, 3);
+            break;
+        case 4:
+            strcpy(personagem->nome, "Luiz");
+            personagem->vida = 30;
+            personagem->ataque = 5;
+            personagem->chanceCritico = 5;
+            personagem->chanceEsquiva = 1;
+            falar(falasLuizEscolhido, 3);
+            break;
+        default:
+            printf("Escolha inválida. Personagem padrão será Wyktor.\n");
+            strcpy(personagem->nome, "Wyktor");
+            personagem->vida = 25;
+            personagem->ataque = 5;
+            personagem->chanceCritico = 10;
+            personagem->chanceEsquiva = 4;
+            falar(falasWyktorEscolhido, 3);
+            break;
+    }
+
+    personagem->curasRestantes = 2;
+}
+
+void realizarAcao(Personagem *atacante, int escolha, Personagem *alvo) {
+    switch (escolha) {
+        case 1:
+            ataque(atacante, alvo);
+            break;
+        case 2:
+            curar(atacante);
+            break;
+        case 3:
+            render(atacante);
+            break;
+        case 4:
+            arriscarCritico(atacante, alvo);
+            break;
+        default:
+            printf("Escolha inválida. O jogador perdeu a vez.\n");
+            break;
+    }
+}
+
+void ataque(Personagem *atacante, Personagem *alvo) {
+    srand(time(NULL));
+    int chanceEsquiva = rand() % 100 + 1;
+
+    if (chanceEsquiva <= alvo->chanceEsquiva) {
+        printf("%s desviou do ataque!\n", alvo->nome);
+    } else {
+        alvo->vida -= atacante->ataque;
+        printf("%s atacou %s e causou %d de dano!\n", atacante->nome, alvo->nome, atacante->ataque);
+    }
+}
+
+void curar(Personagem *personagem) {
+    if (personagem->curasRestantes > 0) {
+        personagem->vida += 2;
+        personagem->curasRestantes--;
+        printf("%s se curou. Vida atual: %d\n", personagem->nome, personagem->vida);
+    } else {
+        printf("%s não pode mais se curar nesta partida.\n", personagem->nome);
+    }
+}
+
+void render(Personagem *personagem) {
+    personagem->vida = 0;
+    printf("%s se rendeu.\n", personagem->nome);
+}
+
+void arriscarCritico(Personagem *atacante, Personagem *alvo) {
+    srand(time(NULL));
+    int chanceCritico = rand() % 100 + 1;
+
+    if (chanceCritico <= atacante->chanceCritico) {
+        int dano = atacante->ataque * 2;
+        alvo->vida -= dano;
+        printf("%s arriscou um golpe crítico em %s e causou %d de dano!\n", atacante->nome, alvo->nome, dano);
+    } else {
+        printf("%s tentou um golpe crítico, mas errou!\n", atacante->nome);
+    }
+}
+
+void modoArcade(Personagem *jogador1, Personagem *jogador2) {
+    int scriptWyktor[] = {1, 1, 3, 0}; // 0 indica o fim do script
+    int scriptBeatriz[] = {3, 3, 1, 0};
+    int scriptJake[] = {1, 1, 3, 0};
+    int scriptLuiz[] = {1, 0}; // Luiz apenas ataca repetidamente
+
+    int indiceScriptWyktor = 0, indiceScriptBeatriz = 0, indiceScriptJake = 0, indiceScriptLuiz = 0;
+
+    while (jogador1->vida > 0 && jogador2->vida > 0) {
+        printf("%s: %d HP | %s: %d HP\n", jogador1->nome, jogador1->vida, jogador2->nome, jogador2->vida);
+
+        if (strcmp(jogador1->nome, "Wyktor") == 0) {
+            executarScript(jogador1, jogador2, &indiceScriptWyktor, scriptWyktor, sizeof(scriptWyktor)/sizeof(int));
+        } else if (strcmp(jogador1->nome, "Beatriz") == 0) {
+            executarScript(jogador1, jogador2, &indiceScriptBeatriz, scriptBeatriz, sizeof(scriptBeatriz)/sizeof(int));
+        } else if (strcmp(jogador1->nome, "Jake") == 0) {
+            executarScript(jogador1, jogador2, &indiceScriptJake, scriptJake, sizeof(scriptJake)/sizeof(int));
+        } else if (strcmp(jogador1->nome, "Luiz") == 0) {
+            executarScript(jogador1, jogador2, &indiceScriptLuiz, scriptLuiz, sizeof(scriptLuiz)/sizeof(int));
+        }
+
+        realizarAcao(jogador2, 1, jogador1); // Jogador 2 sempre ataca no modo Arcade
+    }
+
+    printf("Fim do Jogo!\n%s: %d HP | %s: %d HP\n", jogador1->nome, jogador1->vida, jogador2->nome, jogador2->vida);
+
+    if (jogador1->vida > 0) {
+        printf("%s venceu o modo Arcade!\n", jogador1->nome);
+    } else {
+        printf("%s venceu o modo Arcade!\n", jogador2->nome);
+    }
+}
+
+void executarScript(Personagem *personagem, Personagem *alvo, int *indiceScript, int script[], int tamanhoScript) {
+    if (*indiceScript >= tamanhoScript || script[*indiceScript] == 0) {
+        *indiceScript = 0; // Reinicia o script quando chegar ao final
+    }
+
+    int acao = script[*indiceScript];
+    switch (acao) {
+        case 1:
+            ataque(personagem, alvo);
+            break;
+        case 3:
+            arriscarCritico(personagem, alvo);
+            break;
+        default:
+            break;
+    }
+
+    (*indiceScript)++;
+}

@@ -1,0 +1,226 @@
+#include <stdio.h> // Padrão
+#include <stdbool.h> // Verdadeiro e falso
+#include <string.h> // Controlar Strings
+#include <stdlib.h> // Alocação de memória (também é padrão)
+#include <time.h> // Controlar Tempo (para o Extrato)
+
+#define MAX_TENTATIVAS 3 // Número máximo de tentativas para colocar a senha
+#define TAM_SENHA 8 // Tamanho da Senha
+#define TAM_SENHA_CARTAO 4 // Tamanho da Senha do cartão
+#define TAM_NOME 100 // Tamanho máximo do Nome 
+
+void mostrarMdO() { // Mdo: Menu de Opções
+    printf("\nMenu de Opções:\n");
+    printf("1 - Sacar dinheiro\n");
+    printf("2 - Depositar dinheiro\n");
+    printf("3 - Saldo e Extrato\n");
+    printf("4 - Transferência\n");
+    printf("5 - Redefinir Senha\n");
+    printf("6 - Cadastro de Cartão\n");
+    printf("7 - Sair\n");
+} // Bastidores: Menu
+
+void imprimirComprovante(char *acao, float valor, float saldoAtual) { 
+    time_t agora;
+    time(&agora);
+    printf("Comprovante de %s:\n", acao);
+    printf("Data e Hora: %s", ctime(&agora));
+    printf("Valor: %.2f\n", valor);
+    printf("Saldo atual: %.2f\n", saldoAtual);
+} // Bastidores: Comprovante
+
+unsigned long gerarNumeroConta() {
+    srand(time(NULL)); // Criar de números aleatórios
+    return (rand() % 90000000) + 10000000; // Gera um número aleatório de 8 dígitos
+} // Bastidores: Número da Conta
+
+void propagandaCartao(float rendaMensal) { 
+    if (rendaMensal >= 1000 && rendaMensal < 5000) {
+        printf("Você tem renda o suficiente para retirar o de nivel Cartão Prata.\n");
+    } else if (rendaMensal >= 5000 && rendaMensal < 10000) {
+        printf("Você tem renda o suficiente para retirar o de nivel Cartão Ouro.\n");
+    } else if (rendaMensal >= 10000 && rendaMensal < 50000) {
+        printf("Você tem renda o suficiente para retirar o de nivel Cartão Diamante.\n");
+    } else if (rendaMensal >= 50000 && rendaMensal < 100000) {
+        printf("Você tem renda o suficiente para retirar o de nivel Cartão Grão-Mestre.\n");
+    } else if (rendaMensal >= 100000) {
+        printf("Você tem renda o suficiente para retirar o de nivel Cartão Desafiante.\n");
+    }
+} // Bastidores: Cartão 1
+
+ void CadastroCartao(unsigned long numConta, char *nomeCompleto, float renda, char *senha) {
+    unsigned long numContaInput;
+    char nomeCompletoInput[TAM_NOME];
+    char senhaCartao[TAM_SENHA_CARTAO + 1];
+    char senhaAutenticacao[TAM_SENHA + 1];
+    float limiteCredito;
+
+    printf("Qual o número da sua conta: ");
+    scanf("%lu", &numContaInput);
+
+    printf("Seu nome completo: ");
+    scanf(" %[^\n]", nomeCompletoInput);
+
+    if (numContaInput != numConta || strcmp(nomeCompleto, nomeCompletoInput) != 0) {
+        printf("Número da conta ou nome completo incorretos. Cadastro de cartão não realizado.\n");
+        return;
+    }
+
+    printf("Escolha uma senha de 4 dígitos númericos para o cartão: ");
+    scanf("%s", senhaCartao);
+
+    if (renda >= 1000 && renda < 5000) {
+        limiteCredito = 200 + ((renda - 1000) / 4000) * 2300;
+    } else if (renda >= 5000 && renda < 10000) {
+        limiteCredito = 2500 + ((renda - 5000) / 5000) * 2500;
+    } else if (renda >= 10000 && renda < 50000) {
+        limiteCredito = 5000 + ((renda - 10000) / 40000) * 20000;
+    } else if (renda >= 50000 && renda < 100000) {
+        limiteCredito = 12500 + ((renda - 50000) / 50000) * 37500;
+    } else if (renda >= 100000) {
+        limiteCredito = 50000 + ((renda - 100000) / 100000) * 50000;
+    } else {
+        printf("Renda mensal inválida.\n");
+        return;
+    }
+
+    printf("Confirme sua senha: ");
+    scanf("%s", senhaAutenticacao);
+
+    if (strcmp(senhaAutenticacao, senha) == 0) {
+        printf("Cadastro de cartão realizado com sucesso!\n");
+        printf("Limite de crédito do seu cartão: R$%.2f\n", limiteCredito);
+        printf("Vá até a agência mais próxima para retirar seu cartão com o gerente.\n");
+    } else {
+        printf("Senha incorreta. Cadastro de cartão não realizado.\n");
+    }
+}
+// Bastidores: Bastidores: Cartão 2
+
+int main() { // Palco central
+    char nomeCompleto[TAM_NOME];
+    float rendaMensal;
+    char senha[TAM_SENHA + 1];
+    char senhaDigitada[TAM_SENHA + 1];
+    int tentativas = 0;
+    bool autenticado = false;
+    float saldo = 0.0;
+    unsigned long numeroConta = gerarNumeroConta();
+
+    printf("Bem-vindo ao VMG Bank!\n");
+
+    printf("Digite seu nome completo: ");
+    scanf(" %[^\n]", nomeCompleto);
+
+    printf("Qual a sua renda mensal: ");
+    scanf("%f", &rendaMensal);
+
+    printf("Digite sua senha (8 dígitos numéricos): ");
+    scanf("%s", senha);
+
+    while (tentativas < MAX_TENTATIVAS) {
+        printf("Confirme sua senha: ");
+        scanf("%s", senhaDigitada);
+
+        if (strcmp(senhaDigitada, senha) == 0) {
+            autenticado = true;
+            break;
+        } else {
+            printf("Senha incorreta. Tente novamente.\n");
+            tentativas++;
+        }
+    }
+
+    if (autenticado) {
+        printf("Autenticação bem-sucedida!\n");
+        printf("Número da sua conta: %lu\n", numeroConta);
+        propagandaCartao(rendaMensal);
+
+        int opcao;
+        do {
+            mostrarMdO();
+            printf("Escolha uma opção: ");
+            scanf("%d", &opcao);
+
+            switch (opcao) {
+                case 1: { // Para o saque
+                    float valorSaque; 
+                    printf("Digite o valor do saque: ");
+                    scanf("%f", &valorSaque);
+
+                    if (valorSaque > saldo) {
+                        printf("Saldo insuficiente.\n");
+                    } else {
+                        saldo -= valorSaque;
+                        printf("Saque de %.2f realizado com sucesso.\n", valorSaque);
+                        imprimirComprovante("saque", valorSaque, saldo);
+                    }
+                    break;
+                }
+                case 2: { //Para o deposito
+                    float valorDeposito;
+                    printf("Digite o valor do depósito: ");
+                    scanf("%f", &valorDeposito);
+
+                    saldo += valorDeposito;
+                    printf("Depósito de %.2f realizado com sucesso.\n", valorDeposito);
+                    imprimirComprovante("depósito", valorDeposito, saldo);
+                    break;
+                }
+                case 3: { //Para ver o saldo
+                    printf("Saldo atual: %.2f\n", saldo);
+                    break;
+                }
+                case 4: { //Para transferir
+                    float valorTransferencia;
+                    char contaDestino[50];
+                    char nomeDestinatario[TAM_NOME];
+                    char senhaTransferencia[TAM_SENHA + 1];
+                    printf("Digite o valor da transferência: ");
+                    scanf("%f", &valorTransferencia);
+
+                    if (valorTransferencia > saldo) {
+                        printf("Saldo insuficiente.\n");
+                    } else {
+                        printf("Digite a conta de destino: ");
+                        scanf("%s", contaDestino);
+                        printf("Digite o nome do dono da outra conta: ");
+                        scanf(" %[^\n]", nomeDestinatario);
+                        printf("Digite a senha para a transferência: ");
+                        scanf("%s", senhaTransferencia);
+
+                        if (strcmp(senhaTransferencia, senha) == 0) {
+                            saldo -= valorTransferencia;
+                            printf("Transferência de %.2f para a conta %s realizada com sucesso.\n", valorTransferencia, contaDestino);
+                            imprimirComprovante("transferência", valorTransferencia, saldo);
+                        } else {
+                            printf("Senha incorreta. Transferência não realizada.\n");
+                        }
+                    }
+                    break;
+                }
+                case 5: { //Para criar uma nova senha
+                    printf("Digite a nova senha (8 dígitos numéricos): ");
+                    scanf("%s", senha);
+                    printf("Senha alterada com sucesso.\n");
+                    break;
+                }
+                case 6: { //Para cadastrar o cartão
+                    CadastroCartao(numeroConta, nomeCompleto, rendaMensal, senha);
+                    break;
+                }
+                case 7: //Para finalizar tudo
+                    printf("Obrigado por fazer parte do Banco VMG...\n");
+                    break;
+                default:
+                    printf("Opção inválida. Tente novamente.\n");
+                    break;
+            }
+        } while (opcao != 7);
+
+    } else {
+        printf("Sua conta foi bloqueada. Procure o gerente para mais informações.\n");
+    }
+
+ return 0;
+}

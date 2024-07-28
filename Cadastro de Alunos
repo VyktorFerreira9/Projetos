@@ -1,0 +1,175 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_ESTUDANTES 100000 //Limite de Estudante/Alunos (Pode ser aumentado)
+#define MAX_CURSOS 10 //Limite de Curso (Tambem pode ser aumentado)
+
+// O que define um "Estudante"
+typedef struct {
+    int matricula;
+    char nome[100]; //Duvido que alguem tenha mais de 100 letras no nome
+    int idade;
+    int curso_id;
+    char turno[20];
+    int semestre;
+} Estudante;
+
+// O que define um "Curso"
+typedef struct {
+    int id;
+    char nome[50];
+    char turno[20];
+} Curso;
+
+//Armazenador de estudantes e cursos
+Estudante estudantes[MAX_ESTUDANTES];
+Curso cursos[MAX_CURSOS];
+int total_estudantes = 0;  // Contador quantos estudantes tem 
+int total_cursos = 0;      // Contador quantos cursos tem atualmente
+
+void inicializarCursos() {
+    char* nomes_cursos[MAX_CURSOS] = {
+        "Análise e Desenvolvimento de Sistemas",
+        "Engenharia de Computação",
+        "Ciência da Computação",
+        "Sistemas de Informação",
+        "Engenharia Elétrica",
+        "Engenharia Mecânica",
+        "Engenharia Civil",
+        "Administração",
+        "Direito",
+        "Medicina"
+    };
+    char* turnos[MAX_CURSOS] = {"Matutino", "Matutino", "Vespertino", "Vespertino", "Matutino", "Vespertino", "Matutino", "Vespertino", "Matutino", "Vespertino"};
+
+    for (int i = 0; i < MAX_CURSOS; i++) {
+        cursos[i].id = i + 1;
+        strcpy(cursos[i].nome, nomes_cursos[i]);
+        strcpy(cursos[i].turno, turnos[i]);
+    }
+
+    total_cursos = MAX_CURSOS; // Definindo o total de cursos
+} //Bastidores: Curso
+
+int gerarMatriculaUnica() {
+    int matricula;
+    int unico;
+    
+    do {
+        unico = 1; //garante que só tenha uma
+        matricula = rand() % 90000 + 10000; // Gera um número entre 10000 e 99999
+
+        for (int i = 0; i < total_estudantes; i++) {
+            if (estudantes[i].matricula == matricula) {
+                unico = 0;
+                break;
+            }
+        } //Adiciona e Verifica se não tem nenhuma igual
+    } while (!unico);
+
+    return matricula;
+} //Bastidores:Matricula Unica (MU)
+
+void cadastrarEstudante() {
+    if (total_estudantes >= MAX_ESTUDANTES) {
+        printf("Limite de estudantes atingido!\n");
+        return;
+    } //Mostra o que acontece se o Limite for atingido
+
+    Estudante e; //Aqui temos uma variavel E do tipo Estudante
+    e.matricula = gerarMatriculaUnica();
+    printf("Nome: ");
+    scanf(" %[^\n]s", e.nome);
+    printf("Idade: ");
+    scanf("%d", &e.idade);
+
+    printf("Escolha o turno (Matutino/Vespertino): ");
+    scanf("%s", e.turno);
+
+    printf("Cursos disponíveis no turno %s:\n", e.turno);
+    for (int i = 0; i < total_cursos; i++) {
+        if (strcmp(cursos[i].turno, e.turno) == 0) {
+            printf("%d. %s (Turno: %s)\n", cursos[i].id, cursos[i].nome, cursos[i].turno);
+        }
+    }
+
+    printf("Escolha o curso pelo ID: ");
+    scanf("%d", &e.curso_id);
+    printf("Semestre: "); //Quantos semestre vc quer que o curso dure
+    scanf("%d", &e.semestre);
+
+    estudantes[total_estudantes] = e;
+    total_estudantes++;
+
+    printf("Estudante cadastrado com sucesso!\n");
+    printf("Matrícula: %d\n", e.matricula);
+} //Bastidores:Cadastro
+
+void listarEstudantes() {
+    if (total_estudantes == 0) {
+        printf("Nenhum estudante cadastrado!\n");
+        return;
+    } //Caso esteja vazio
+
+    for (int i = 0; i < total_estudantes; i++) {
+        Curso curso = cursos[estudantes[i].curso_id - 1];
+        printf("Matricula: %d, Nome: %s, Idade: %d, Curso: %s, Semestre: %d, Turno: %s\n",
+               estudantes[i].matricula, estudantes[i].nome, estudantes[i].idade, curso.nome, estudantes[i].semestre, curso.turno);
+    }
+} //Bastidores:Lista
+
+void buscarEstudante() {
+    int matricula;
+    printf("Digite o número da matrícula: ");
+    scanf("%d", &matricula);
+
+    for (int i = 0; i < total_estudantes; i++) {
+        if (estudantes[i].matricula == matricula) {
+            Curso curso = cursos[estudantes[i].curso_id - 1];
+            printf("Estudante encontrado: Matricula: %d, Nome: %s, Idade: %d, Curso: %s, Semestre: %d, Turno: %s\n",
+                   estudantes[i].matricula, estudantes[i].nome, estudantes[i].idade, curso.nome, estudantes[i].semestre, curso.turno);
+            return;
+        }
+    }
+
+    printf("Estudante não encontrado!\n");
+} //Bastidores: Busca/Google
+
+int main() { //Palco Central
+    srand(time(NULL)); // Inicia o gerador de números aleatórios
+
+    inicializarCursos();
+
+    int opcao;
+
+    do {
+        printf("1. Cadastrar Estudante\n");
+        printf("2. Listar Estudantes\n");
+        printf("3. Buscar Estudante\n");
+        printf("4. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                cadastrarEstudante();
+                break;
+            case 2:
+                listarEstudantes();
+                break;
+            case 3:
+                buscarEstudante();
+                break;
+            case 4:
+                printf("Saindo...\n");
+                break;
+            default:
+                printf("Opção inválida!\n");
+                break;
+        }
+    } while (opcao != 4);
+
+    return 0;
+}
